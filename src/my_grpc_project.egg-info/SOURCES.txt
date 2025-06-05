@@ -1,0 +1,12 @@
+pyproject.toml
+src/grpc_project/__init__.py
+src/grpc_project/client.py
+src/grpc_project/helloworld_pb2.py
+src/grpc_project/helloworld_pb2_grpc.py
+src/grpc_project/server.py
+src/my_grpc_project.egg-info/PKG-INFO
+src/my_grpc_project.egg-info/SOURCES.txt
+src/my_grpc_project.egg-info/dependency_links.txt
+src/my_grpc_project.egg-info/requires.txt
+src/my_grpc_project.egg-info/top_level.txt
+tests/test_grpc.py

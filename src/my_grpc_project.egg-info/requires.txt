@@ -1,0 +1,6 @@
+grpcio
+grpcio-tools
+black
+ruff
+mypy
+pytest

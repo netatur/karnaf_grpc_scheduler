@@ -1,0 +1,20 @@
+[project]
+name = "my-grpc-project"
+version = "0.1.0"
+description = "Simple gRPC example using uv"
+dependencies = [
+    "grpcio",
+    "grpcio-tools",
+    "black",
+    "ruff",
+    "mypy",
+    "pytest"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["grpc_project"]
