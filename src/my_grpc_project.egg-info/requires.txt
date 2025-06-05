@@ -4,3 +4,4 @@ black
 ruff
 mypy
 pytest
+types-protobuf>=6.30.2.20250516

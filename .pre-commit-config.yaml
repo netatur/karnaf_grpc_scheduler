@@ -14,3 +14,4 @@ repos:
     hooks:
       - id: mypy
         files: ^src/
+        exclude: ^(src/grpc_project/.*_pb2\.py$|proto/.*\.proto$)
