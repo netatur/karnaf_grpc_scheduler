@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service Scheduler {
+  rpc ScheduleCallback (ScheduleRequest) returns (ScheduleResponse);
+}
+
+message ScheduleRequest {
+  string id = 1;
+  string url_callback = 2;
+  int32 time = 3;
+}
+
+message ScheduleResponse {
+  string status = 1;
+}
