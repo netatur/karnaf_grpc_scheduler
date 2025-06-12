@@ -30,8 +30,3 @@ def serve(grpc_port: int) -> None:
     server.add_insecure_port(f"[::]:{grpc_port}")
     server.start()
     server.wait_for_termination()
-
-
-if __name__ == "__main__":
-    grpc_port = 50051
-    serve(grpc_port)

@@ -1,5 +1,7 @@
 # REDIS
 FAILED_REQUEST_VALUE = "failed_requests"
+CALLBACKS_VALUE = "callbacks"
+RETRY_IN_SECONDS = 10
 
 # GRPS
 GRPC_HOST = "localhost"

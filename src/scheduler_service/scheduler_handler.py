@@ -3,11 +3,8 @@ import time
 
 import requests
 
+from common.config import CALLBACKS_VALUE, RETRY_IN_SECONDS
 from common.infra.set.abstract_set import AbstractSet
-from common.infra.set.redis_set import RedisSet
-
-VALUES_NAME = "callbacks"
-RETRY_IN_SECONDS = 10
 
 
 class SchedulerHandler:
@@ -25,18 +22,13 @@ class SchedulerHandler:
     def handle(self):
         while True:
             now = time.time()
-            sorted_callback = self.set.get(VALUES_NAME, 0, now)
+            sorted_callback = self.set.get(CALLBACKS_VALUE, 0, now)
             for callback in sorted_callback:
                 try:
                     self.send_request(json.loads(callback))
                 except Exception:
-                    self.set.add(VALUES_NAME, {callback: now + RETRY_IN_SECONDS})
+                    self.set.add(CALLBACKS_VALUE, {callback: now + RETRY_IN_SECONDS})
                 else:
-                    self.set.remove(VALUES_NAME, callback)
+                    self.set.remove(CALLBACKS_VALUE, callback)
 
             time.sleep(1)
-
-
-if __name__ == "__main__":
-    scheduler_handler = SchedulerHandler(RedisSet())
-    scheduler_handler.handle()

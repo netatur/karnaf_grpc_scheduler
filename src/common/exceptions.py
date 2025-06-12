@@ -1,2 +1,2 @@
-class RETRY_FAILED_REQUEST_ERROR(Exception):
+class RetryFailedRequestError(Exception):
     pass

@@ -5,7 +5,7 @@ import time
 import requests
 
 from common.config import FAILED_REQUEST_VALUE, API_HOST, API_PORT
-from common.exceptions import RETRY_FAILED_REQUEST_ERROR
+from common.exceptions import RetryFailedRequestError
 from common.infra.set.redis_set import RedisSet
 
 redis = RedisSet()
@@ -21,10 +21,6 @@ def handle():
                 requests.post(url, json=json.loads(callback.decode("utf-8")))
                 redis.remove(FAILED_REQUEST_VALUE, callback)
             except Exception:
-                logging.exception("Failed callback request. Add alert!")
-                raise RETRY_FAILED_REQUEST_ERROR
+                logging.exception("Failed callback request. **Add alert!**")
+                raise RetryFailedRequestError
         time.sleep(10)
-
-
-if __name__ == "__main__":
-    handle()
