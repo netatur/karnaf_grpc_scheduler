@@ -3,12 +3,11 @@ import time
 from concurrent import futures
 
 import grpc
-from redis import Redis
 
-import scheduler_callback_pb2
-import scheduler_callback_pb2_grpc
 from common.infra.set.abstract_set import AbstractSet
 from common.infra.set.redis_set import RedisSet
+from common.proto import scheduler_callback_pb2
+from common.proto import scheduler_callback_pb2_grpc
 
 
 class RequestManager(scheduler_callback_pb2_grpc.SchedulerServicer):

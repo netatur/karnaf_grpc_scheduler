@@ -2,8 +2,7 @@ import logging
 
 import grpc
 
-import scheduler_callback_pb2
-import scheduler_callback_pb2_grpc
+from common.proto import scheduler_callback_pb2, scheduler_callback_pb2_grpc
 
 
 class Client:
