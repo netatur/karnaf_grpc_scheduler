@@ -1,11 +1,15 @@
+import asyncio
 import logging
 
 import grpc
 
+from common.classes.callback_request import CallbackRequest
+from common.config import GRPC_HOST, GRPC_PORT
+from common.infra.queue.rabbit.rabbit_consumer import RabbitMQConsumer
 from common.proto import scheduler_callback_pb2, scheduler_callback_pb2_grpc
 
 
-class Client:
+class GrpcClient:
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
@@ -20,3 +24,19 @@ class Client:
             )
             response = stub.ScheduleCallback(request)
             logging.info(f"Client received: {response.status}")
+
+
+async def handle_message(message: dict):
+    request = CallbackRequest.model_validate(message)
+    client.send_schedule_request(request.id, request.url_callback, request.time)
+
+
+async def driver() -> None:
+    await consumer.consume(handle_message)
+    await asyncio.Event().wait()
+
+
+if __name__ == "__main__":
+    client = GrpcClient(host=GRPC_HOST, port=GRPC_PORT)
+    consumer = RabbitMQConsumer()
+    asyncio.run(driver())
