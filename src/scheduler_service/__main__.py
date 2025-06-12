@@ -15,5 +15,4 @@ if __name__ == "__main__":
     consumer = RabbitMQConsumer(SCHEDULER_QUEUE, SCHEDULER_DLQ_QUEUE, SCHEDULER_RETRY_QUEUE, SCHEDULER_DLX_EXCHANGE,
                                 SCHEDULER_RETRY_EXCHANGE)
     scheduler_handler = SchedulerHandler(consumer)
-    # scheduler_handler.handle()
     asyncio.run(driver())
