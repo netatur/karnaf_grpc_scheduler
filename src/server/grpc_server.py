@@ -1,32 +1,34 @@
-import json
-import time
 from concurrent import futures
 
-import grpc
+import grpc.aio
 
-from common.infra.set.abstract_set import AbstractSet
-from common.infra.set.redis_set import RedisSet
+from common.config import SCHEDULER_QUEUE, SCHEDULER_RETRY_EXCHANGE, SCHEDULER_DELAYED_EXCHANGE, \
+    SCHEDULER_DELAYED_ROUTING_KEY
+from common.infra.queue.rabbit.rabbit_producer import RabbitMQProducer
 from common.proto import scheduler_callback_pb2
 from common.proto import scheduler_callback_pb2_grpc
 
 
 class RequestManager(scheduler_callback_pb2_grpc.SchedulerServicer):
-    def __init__(self, set: AbstractSet) -> None:
-        self.set = set
 
-    def ScheduleCallback(
-        self, request: scheduler_callback_pb2.ScheduleRequest, context
+    def __init__(self, producer: RabbitMQProducer):
+        self.producer = producer
+
+    async def ScheduleCallback(
+            self, request: scheduler_callback_pb2.ScheduleRequest, context
     ) -> scheduler_callback_pb2.ScheduleResponse:
+        print(f"Got request {request}")
         key = {"id": request.id, "url": request.url_callback}
-        sending_time = time.time() + request.time
-        self.set.add("callbacks", {json.dumps(key): sending_time})
+        await self.producer.publish(message=key, delay_ms=request.time)
         return scheduler_callback_pb2.ScheduleResponse(status="200")
 
 
-def serve(grpc_port: int) -> None:
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    request_manager = RequestManager(RedisSet())
+async def serve(grpc_port: int) -> None:
+    server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
+    producer = RabbitMQProducer(SCHEDULER_QUEUE, SCHEDULER_RETRY_EXCHANGE, SCHEDULER_DELAYED_EXCHANGE,
+                                SCHEDULER_DELAYED_ROUTING_KEY)
+    request_manager = RequestManager(producer)
     scheduler_callback_pb2_grpc.add_SchedulerServicer_to_server(request_manager, server)
     server.add_insecure_port(f"[::]:{grpc_port}")
-    server.start()
-    server.wait_for_termination()
+    await server.start()
+    await server.wait_for_termination()

@@ -7,7 +7,7 @@ url = "http://localhost:8081/register"
 data = {
     "id": "12345",
     "url_callback": "http://example.com/callback",
-    "time": 10
+    "time": 100
 }
 
 # Send the POST request

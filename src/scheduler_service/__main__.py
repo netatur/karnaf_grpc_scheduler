@@ -1,6 +1,19 @@
-from common.infra.set.redis_set import RedisSet
+import asyncio
+
+from common.config import SCHEDULER_QUEUE, SCHEDULER_DLQ_QUEUE, SCHEDULER_RETRY_QUEUE, SCHEDULER_DLX_EXCHANGE, \
+    SCHEDULER_RETRY_EXCHANGE
+from common.infra.queue.rabbit.rabbit_consumer import RabbitMQConsumer
 from scheduler_service.scheduler_handler import SchedulerHandler
 
+
+async def driver() -> None:
+    await consumer.consume(scheduler_handler.send_request)
+    await asyncio.Event().wait()
+
+
 if __name__ == "__main__":
-    scheduler_handler = SchedulerHandler(RedisSet())
-    scheduler_handler.handle()
+    consumer = RabbitMQConsumer(SCHEDULER_QUEUE, SCHEDULER_DLQ_QUEUE, SCHEDULER_RETRY_QUEUE, SCHEDULER_DLX_EXCHANGE,
+                                SCHEDULER_RETRY_EXCHANGE)
+    scheduler_handler = SchedulerHandler(consumer)
+    # scheduler_handler.handle()
+    asyncio.run(driver())

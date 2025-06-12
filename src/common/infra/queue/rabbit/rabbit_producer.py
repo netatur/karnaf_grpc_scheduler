@@ -4,14 +4,15 @@ import logging
 from aio_pika import connect_robust, Message, DeliveryMode, ExchangeType
 
 logging.basicConfig(level=logging.INFO)
-RETRY_EXCHANGE = "my_retry_exchange"
-DELAYED_EXCHANGE = "my_delayed_exchange"
-DELAYED_ROUTING_KEY = "delayed_key"
+
 
 class RabbitMQProducer:
-    def __init__(self, queue_name: str, host: str = "localhost"):
+    def __init__(self, queue_name: str, retry_exchange_name: str, delayed_exchange_name: str, delayed_routing_key: str):
         self.queue_name = queue_name
-        self.host = host
+        self.retry_exchange_name = retry_exchange_name
+        self.delayed_exchange_name = delayed_exchange_name
+        self.delayed_routing_key = delayed_routing_key
+        self.host = "localhost"
         self.connection = None
         self.channel = None
 
@@ -21,7 +22,7 @@ class RabbitMQProducer:
         self.channel = await self.connection.channel()
         # Declare the delayed exchange
         self.exchange = await self.channel.declare_exchange(
-            DELAYED_EXCHANGE,
+            self.delayed_exchange_name,
             type=ExchangeType.X_DELAYED_MESSAGE,
             durable=True,
             arguments={"x-delayed-type": "direct"},
@@ -29,9 +30,9 @@ class RabbitMQProducer:
 
         # Declare the queue and bind it to the delayed exchange
         queue = await self.channel.declare_queue(self.queue_name, durable=True, arguments={
-                "x-dead-letter-exchange": RETRY_EXCHANGE,
-            },)
-        await queue.bind(self.exchange, routing_key=DELAYED_ROUTING_KEY)
+            "x-dead-letter-exchange": self.retry_exchange_name,
+        }, )
+        await queue.bind(self.exchange, routing_key=self.delayed_routing_key)
         logging.info(f"Connected to RabbitMQ at {self.host}, queue: {self.queue_name}")
 
     async def publish(self, message: dict, delay_ms: int = 0):
