@@ -1,11 +1,12 @@
 import json
 import logging
 
-from aio_pika import connect_robust, Message, DeliveryMode
+from aio_pika import connect_robust, Message, DeliveryMode, ExchangeType
 
 logging.basicConfig(level=logging.INFO)
 RETRY_EXCHANGE = "my_retry_exchange"
-
+DELAYED_EXCHANGE = "my_delayed_exchange"
+DELAYED_ROUTING_KEY = "delayed_key"
 
 class RabbitMQProducer:
     def __init__(self, queue_name: str, host: str = "localhost"):
@@ -18,24 +19,33 @@ class RabbitMQProducer:
         """Establish an asynchronous connection and channel."""
         self.connection = await connect_robust(f"amqp://{self.host}/")
         self.channel = await self.connection.channel()
-        await self.channel.declare_queue(
-            self.queue_name,
+        # Declare the delayed exchange
+        self.exchange = await self.channel.declare_exchange(
+            DELAYED_EXCHANGE,
+            type=ExchangeType.X_DELAYED_MESSAGE,
             durable=True,
-            arguments={
-                "x-dead-letter-exchange": RETRY_EXCHANGE,
-            },
+            arguments={"x-delayed-type": "direct"},
         )
+
+        # Declare the queue and bind it to the delayed exchange
+        queue = await self.channel.declare_queue(self.queue_name, durable=True, arguments={
+                "x-dead-letter-exchange": RETRY_EXCHANGE,
+            },)
+        await queue.bind(self.exchange, routing_key=DELAYED_ROUTING_KEY)
         logging.info(f"Connected to RabbitMQ at {self.host}, queue: {self.queue_name}")
 
-    async def publish(self, message: dict):
+    async def publish(self, message: dict, delay_ms: int = 0):
         """Publish a message to the queue in JSON format."""
         if not self.channel:
             await self.connect()
 
         message_body = json.dumps(message).encode()
 
-        msg = Message(body=message_body, delivery_mode=DeliveryMode.PERSISTENT)
-
+        msg = Message(
+            body=message_body,
+            delivery_mode=DeliveryMode.PERSISTENT,
+            headers={"x-delay": delay_ms}
+        )
         await self.channel.default_exchange.publish(msg, routing_key=self.queue_name)
         logging.info(f"Published message: {message}")
 
