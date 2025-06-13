@@ -1,3 +1,4 @@
+import logging
 from concurrent import futures
 
 import grpc.aio
@@ -21,7 +22,7 @@ class RequestManager(scheduler_callback_pb2_grpc.SchedulerServicer):
     async def ScheduleCallback(
         self, request: scheduler_callback_pb2.ScheduleRequest, context
     ) -> scheduler_callback_pb2.ScheduleResponse:
-        print(f"Got request {request}")
+        logging.info(f"Got request {request}")
         key = {"id": request.id, "url": request.url_callback}
         await self.producer.publish(message=key, delay_ms=request.time)
         return scheduler_callback_pb2.ScheduleResponse(status="200")

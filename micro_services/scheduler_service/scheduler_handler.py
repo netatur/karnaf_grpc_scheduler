@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from common.infra.queue.rabbit.rabbit_consumer import RabbitMQConsumer
@@ -12,5 +14,5 @@ class SchedulerHandler:
         try:
             requests.post(request["url"], json={"id": request["id"]}, timeout=5)
         except (ConnectionError, Exception) as e:
-            print(f"Error sending {request['id']}: {e}")
+            logging.error(f"Error sending {request['id']}: {e}")
             raise e

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from common.classes.callback_request import CallbackRequest
 from common.config import (
@@ -16,7 +17,7 @@ from micro_services.grpc_client.grpc_client import GrpcClient
 async def handle_message(message: dict):
     request = CallbackRequest.model_validate(message)
     client.send_schedule_request(request.id, request.url_callback, request.time)
-    print(f"Received callback request: {request}")
+    logging.info(f"Received callback request: {request}")
 
 
 async def driver() -> None:
