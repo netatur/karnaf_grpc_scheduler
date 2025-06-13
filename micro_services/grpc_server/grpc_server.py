@@ -8,7 +8,7 @@ from common.config import (
     SCHEDULER_RETRY_EXCHANGE,
     SCHEDULER_DELAYED_EXCHANGE,
     SCHEDULER_DELAYED_ROUTING_KEY,
-    SCHEDULER_DLX_EXCHANGE,
+    SCHEDULER_DLX_EXCHANGE, SCHEDULER_DLQ_QUEUE,
 )
 from common.infra.queue.rabbit.rabbit_producer import RabbitMQProducer
 from common.proto import scheduler_callback_pb2, scheduler_callback_pb2_grpc
@@ -32,8 +32,8 @@ async def serve(grpc_port: int) -> None:
     server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
     producer = RabbitMQProducer(
         SCHEDULER_QUEUE,
+        SCHEDULER_DLQ_QUEUE,
         SCHEDULER_DLX_EXCHANGE,
-        SCHEDULER_RETRY_EXCHANGE,
         SCHEDULER_DELAYED_EXCHANGE,
         SCHEDULER_DELAYED_ROUTING_KEY,
     )
