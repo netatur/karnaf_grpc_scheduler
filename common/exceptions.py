@@ -1,2 +1,0 @@
-class RetryFailedRequestError(Exception):
-    pass

@@ -1,0 +1,23 @@
+
+# Do NOT ignore the .git directory
+!.git
+
+# Ignore PyCharm settings directory
+.idea/
+
+# Ignore virtual environments (for example, .venv or .env)
+.venv/
+env/
+
+# Ignore Python cache files
+__pycache__/
+
+# Ignore other specific hidden files or directories
+# .tox/
+# .mypy_cache/
+
+*.egg-info/
+
+# Ignore generated protobuf Python files in common/proto/
+common/proto/*_pb2.py
+common/proto/*_pb2_grpc.py
