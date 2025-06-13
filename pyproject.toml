@@ -17,6 +17,12 @@ dependencies = [
     "aio-pika>=9.5.5",
 ]
 
+[tool.ruff]
+select = ["F", "E", "I", "ANN"]  # ANN = type annotations
+
+[tool.mypy]
+strict = true
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"

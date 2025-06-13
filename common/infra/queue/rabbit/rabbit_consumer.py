@@ -15,10 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class RabbitMQConsumer:
-    def __init__(
-        self,
-        queue_name: str
-    ) -> None:
+    def __init__(self, queue_name: str) -> None:
         self.queue_name = queue_name
         self.dlq_name = f"{queue_name}_dlq"
         self.retry_exchange_name = f"{queue_name}_retry_exchange"

@@ -7,12 +7,10 @@ from common.config import (
 from common.infra.queue.rabbit.rabbit_producer import RabbitMQProducer
 
 app = FastAPI()
-producer = RabbitMQProducer(
-    REQUEST_QUEUE
-)
+producer = RabbitMQProducer(REQUEST_QUEUE)
 
 
 @app.post("/register")
-async def register_callback(req: CallbackRequest):
+async def register_callback(req: CallbackRequest) -> Response:
     await producer.publish(req.model_dump())
     return Response(status_code=status.HTTP_200_OK)

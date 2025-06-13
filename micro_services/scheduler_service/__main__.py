@@ -1,11 +1,6 @@
 import asyncio
 
-from common.config import (
-    SCHEDULER_QUEUE,
-    SCHEDULER_DLQ_QUEUE,
-    SCHEDULER_DLX_EXCHANGE,
-    SCHEDULER_RETRY_EXCHANGE,
-)
+from common.config import SCHEDULER_QUEUE
 from common.infra.queue.rabbit.rabbit_consumer import RabbitMQConsumer
 from micro_services.scheduler_service.scheduler_handler import SchedulerHandler
 
@@ -16,8 +11,6 @@ async def driver() -> None:
 
 
 if __name__ == "__main__":
-    consumer = RabbitMQConsumer(
-        SCHEDULER_QUEUE
-    )
+    consumer = RabbitMQConsumer(SCHEDULER_QUEUE)
     scheduler_handler = SchedulerHandler(consumer)
     asyncio.run(driver())

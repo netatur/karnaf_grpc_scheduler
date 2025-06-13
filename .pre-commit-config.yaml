@@ -12,5 +12,5 @@ repos:
     rev: v1.10.0
     hooks:
       - id: mypy
-        exclude: protobuf
+        exclude: ^common/proto/.*\.py$
         additional_dependencies: ["types-protobuf", "types-redis", "types-requests", "protobuf"]

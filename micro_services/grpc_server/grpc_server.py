@@ -1,15 +1,10 @@
 import logging
 from concurrent import futures
+from typing import Any
 
 import grpc.aio
 
-from common.config import (
-    SCHEDULER_QUEUE,
-    SCHEDULER_RETRY_EXCHANGE,
-    SCHEDULER_DELAYED_EXCHANGE,
-    SCHEDULER_DELAYED_ROUTING_KEY,
-    SCHEDULER_DLX_EXCHANGE, SCHEDULER_DLQ_QUEUE,
-)
+from common.config import SCHEDULER_QUEUE
 from common.infra.queue.rabbit.rabbit_producer import RabbitMQProducer
 from common.proto import scheduler_callback_pb2, scheduler_callback_pb2_grpc
 
@@ -20,7 +15,7 @@ class RequestManager(scheduler_callback_pb2_grpc.SchedulerServicer):
         self.producer = producer
 
     async def ScheduleCallback(
-        self, request: scheduler_callback_pb2.ScheduleRequest, context
+        self, request: scheduler_callback_pb2.ScheduleRequest, context: Any
     ) -> scheduler_callback_pb2.ScheduleResponse:
         logging.info(f"Got request {request}")
         key = {"id": request.id, "url": request.url_callback}
@@ -30,9 +25,7 @@ class RequestManager(scheduler_callback_pb2_grpc.SchedulerServicer):
 
 async def serve(grpc_port: int) -> None:
     server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
-    producer = RabbitMQProducer(
-        SCHEDULER_QUEUE
-    )
+    producer = RabbitMQProducer(SCHEDULER_QUEUE)
     request_manager = RequestManager(producer)
     scheduler_callback_pb2_grpc.add_SchedulerServicer_to_server(request_manager, server)
     server.add_insecure_port(f"[::]:{grpc_port}")

@@ -9,10 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class RabbitMQProducer:
-    def __init__(
-        self,
-        queue_name: str
-    ):
+    def __init__(self, queue_name: str):
         self.queue_name = queue_name
         self.dlq_name = f"{queue_name}_dlq"
         self.dlq_exchange_name = f"{queue_name}_dlq_exchange"
@@ -23,7 +20,7 @@ class RabbitMQProducer:
         self.connection = None
         self.channel = None
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Establish an asynchronous connection and channel."""
         self.connection = await connect_robust(f"amqp://{self.host}/")
         self.channel = await self.connection.channel()
@@ -64,7 +61,7 @@ class RabbitMQProducer:
         await self.channel.default_exchange.publish(msg, routing_key=self.queue_name)
         logging.info(f"Published message: {message}")
 
-    async def close(self):
+    async def close(self) -> None:
         """Close connection gracefully."""
         if self.connection:
             await self.connection.close()
