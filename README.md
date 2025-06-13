@@ -56,3 +56,7 @@ Consumes delayed messages from RabbitMQ and sends the actual callback to the pro
 - test the project:
   > uv run .\hack\send_request.py
 
+## Notes: 
+1. The entire project supports auto-scaling.
+2. I would also add Docker, monitoring, and handling of specific exceptions.
+3. I would like to store all incoming requests in DB for backup purposes.
