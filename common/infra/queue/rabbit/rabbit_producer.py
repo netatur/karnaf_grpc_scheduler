@@ -11,17 +11,13 @@ logging.basicConfig(level=logging.INFO)
 class RabbitMQProducer:
     def __init__(
         self,
-        queue_name: str,
-        dlx_queue_name: str,
-        dlx_exchange_name: str,
-        delayed_exchange_name: str,
-        delayed_routing_key: str,
+        queue_name: str
     ):
         self.queue_name = queue_name
-        self.dlx_queue_name = dlx_queue_name
-        self.dlx_exchange_name = dlx_exchange_name
-        self.delayed_exchange_name = delayed_exchange_name
-        self.delayed_routing_key = delayed_routing_key
+        self.dlq_name = f"{queue_name}_dlq"
+        self.dlq_exchange_name = f"{queue_name}_dlq_exchange"
+        self.delayed_exchange_name = f"{queue_name}_delayed_exchange"
+        self.delayed_routing_key = f"{queue_name}_delayed_key"
         self.max_retries = MAX_RETRIES
         self.host = "localhost"
         self.connection = None
@@ -46,8 +42,8 @@ class RabbitMQProducer:
             arguments={
                 "x-queue-type": "quorum",
                 "x-delivery-limit": self.max_retries,
-                "x-dead-letter-exchange": self.dlx_exchange_name,
-                "x-dead-letter-routing-key": self.dlx_queue_name,
+                "x-dead-letter-exchange": self.dlq_exchange_name,
+                "x-dead-letter-routing-key": self.dlq_name,
             },
         )
         await queue.bind(self.exchange, routing_key=self.delayed_routing_key)

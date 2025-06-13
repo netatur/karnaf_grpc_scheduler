@@ -17,15 +17,12 @@ logging.basicConfig(level=logging.INFO)
 class RabbitMQConsumer:
     def __init__(
         self,
-        queue_name: str,
-        dlq_name: str,
-        retry_exchange_name: str,
-        dlq_exchange_name: str,
+        queue_name: str
     ) -> None:
         self.queue_name = queue_name
-        self.dlq_name = dlq_name
-        self.retry_exchange_name = retry_exchange_name
-        self.dlq_exchange_name = dlq_exchange_name
+        self.dlq_name = f"{queue_name}_dlq"
+        self.retry_exchange_name = f"{queue_name}_retry_exchange"
+        self.dlq_exchange_name = f"{queue_name}_dlq_exchange"
         self.retry_delay_ms = RETRY_DELAY_MS
         self.max_retries = MAX_RETRIES
         self.connection = None

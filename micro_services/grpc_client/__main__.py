@@ -28,6 +28,6 @@ async def driver() -> None:
 if __name__ == "__main__":
     client = GrpcClient(host=GRPC_HOST, port=GRPC_PORT)
     consumer = RabbitMQConsumer(
-        REQUEST_QUEUE, REQUEST_DLQ_QUEUE, REQUEST_RETRY_EXCHANGE, REQUEST_DLX_EXCHANGE
+        REQUEST_QUEUE
     )
     asyncio.run(driver())
