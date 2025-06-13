@@ -17,7 +17,3 @@ __pycache__/
 # .mypy_cache/
 
 *.egg-info/
-
-# Ignore generated protobuf Python files in common/proto/
-common/proto/*_pb2.py
-common/proto/*_pb2_grpc.py
