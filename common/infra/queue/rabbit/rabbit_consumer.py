@@ -15,7 +15,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class RabbitMQConsumer:
-    def __init__(self, queue_name: str, dlq_name: str, retry_exchange_name: str, dlq_exchange_name: str) -> None:
+    def __init__(
+        self,
+        queue_name: str,
+        dlq_name: str,
+        retry_exchange_name: str,
+        dlq_exchange_name: str,
+    ) -> None:
         self.queue_name = queue_name
         self.dlq_name = dlq_name
         self.retry_exchange_name = retry_exchange_name
@@ -78,14 +84,16 @@ class RabbitMQConsumer:
                 await handler(payload)
                 await message.ack()
 
-            except Exception as e:
+            except Exception:
                 retry_count = message.headers.get("x-retry-count", 0) + 1
 
                 if retry_count >= self.max_retries:
                     logging.warning("Max retries reached, sending to DLQ")
                     await message.reject(requeue=False)
                 else:
-                    logging.warning(f"Retrying message (attempt {retry_count}) after delay")
+                    logging.warning(
+                        f"Retrying message (attempt {retry_count}) after delay"
+                    )
                     await self.retry_exchange.publish(
                         Message(
                             body=message.body,
