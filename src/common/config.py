@@ -1,7 +1,6 @@
 # RABBIT
 REQUEST_QUEUE = "requests"
 REQUEST_DLQ_QUEUE = "requests_dlq"
-REQUEST_RETRY_QUEUE = "requests_retry"
 REQUEST_DLX_EXCHANGE = "requests_dlq_exchange"
 REQUEST_RETRY_EXCHANGE = "requests_retry_exchange"
 REQUEST_DELAYED_EXCHANGE = "requests_delayed_exchange"

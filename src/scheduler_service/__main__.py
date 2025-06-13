@@ -12,7 +12,6 @@ async def driver() -> None:
 
 
 if __name__ == "__main__":
-    consumer = RabbitMQConsumer(SCHEDULER_QUEUE, SCHEDULER_DLQ_QUEUE, SCHEDULER_RETRY_QUEUE, SCHEDULER_DLX_EXCHANGE,
-                                SCHEDULER_RETRY_EXCHANGE)
+    consumer = RabbitMQConsumer(SCHEDULER_QUEUE, SCHEDULER_DLQ_QUEUE, SCHEDULER_RETRY_EXCHANGE, SCHEDULER_DLX_EXCHANGE)
     scheduler_handler = SchedulerHandler(consumer)
     asyncio.run(driver())

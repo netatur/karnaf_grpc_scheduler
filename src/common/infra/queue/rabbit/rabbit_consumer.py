@@ -7,7 +7,6 @@ from aio_pika import (
     IncomingMessage,
     Message,
     DeliveryMode,
-    ExchangeType,
 )
 
 from common.config import RETRY_DELAY_MS, MAX_RETRIES
@@ -16,54 +15,57 @@ logging.basicConfig(level=logging.INFO)
 
 
 class RabbitMQConsumer:
-    def __init__(self, queue_name: str, dlq_name: str, retry_name: str, dlq_exchange_name: str,
-                 retry_exchange_name: str) -> None:
+    def __init__(self, queue_name: str, dlq_name: str, retry_exchange_name: str, dlq_exchange_name: str) -> None:
         self.queue_name = queue_name
         self.dlq_name = dlq_name
-        self.retry_name = retry_name
-        self.dlq_exchange_name = dlq_exchange_name
         self.retry_exchange_name = retry_exchange_name
+        self.dlq_exchange_name = dlq_exchange_name
         self.retry_delay_ms = RETRY_DELAY_MS
         self.max_retries = MAX_RETRIES
         self.connection = None
         self.channel = None
         self.queue = None
+        self.retry_exchange = None
+        self.dlx_exchange = None
 
     async def connect(self):
         self.connection = await connect_robust("amqp://localhost/")
         self.channel = await self.connection.channel()
         await self.channel.set_qos(prefetch_count=1)
-        # Declare exchanges
+
+        # Declare retry exchange (delayed message plugin required)
         self.retry_exchange = await self.channel.declare_exchange(
-            self.retry_exchange_name, ExchangeType.DIRECT, durable=True
-        )
-        self.dlx_exchange = await self.channel.declare_exchange(
-            self.dlq_exchange_name, ExchangeType.DIRECT, durable=True
+            self.retry_exchange_name,
+            type="x-delayed-message",
+            durable=True,
+            arguments={"x-delayed-type": "direct"},
         )
 
+        # Declare DLX (dead-letter exchange)
+        self.dlx_exchange = await self.channel.declare_exchange(
+            self.dlq_exchange_name, type="direct", durable=True
+        )
+
+        # Declare main queue
         self.queue = await self.channel.declare_queue(
             self.queue_name,
             durable=True,
             arguments={
-                "x-dead-letter-exchange": self.retry_exchange_name,
-            },
-        )
-        self.retry_queue = await self.channel.declare_queue(
-            self.retry_name,
-            durable=True,
-            arguments={
-                "x-message-ttl": self.retry_delay_ms,
-                "x-dead-letter-exchange": "",  # default exchange routes back to main queue
-                "x-dead-letter-routing-key": self.queue_name,
+                "x-queue-type": "quorum",
+                "x-dead-letter-exchange": self.dlq_exchange_name,
+                "x-dead-letter-routing-key": self.dlq_name,
+                "x-delivery-limit": self.max_retries,
             },
         )
 
+        # Bind main queue to retry exchange so delayed messages route back here
+        await self.queue.bind(self.retry_exchange, routing_key=self.queue_name)
+
+        # Declare DLQ
         self.dlq_queue = await self.channel.declare_queue(
             self.dlq_name,
             durable=True,
         )
-
-        await self.retry_queue.bind(self.retry_exchange_name, routing_key=self.retry_name)
 
         await self.dlq_queue.bind(self.dlx_exchange, routing_key=self.dlq_name)
 
@@ -71,49 +73,32 @@ class RabbitMQConsumer:
         async def on_message(message: IncomingMessage):
             try:
                 payload = json.loads(message.body.decode())
-                print(f"Received message: {payload}")
+                logging.info(f"Received message: {payload}")
 
-                # Run the handler
                 await handler(payload)
-
                 await message.ack()
 
             except Exception as e:
-                retry_count = (message.headers or {}).get("x-retries", 0)
-                logging.warning(f"Processing failed: {e} | Retry count: {retry_count}")
+                retry_count = message.headers.get("x-retry-count", 0) + 1
 
-                if retry_count < self.max_retries:
-                    # Republish to retry queue with incremented retry count header
-                    headers = dict(message.headers or {})
-                    headers["x-retries"] = retry_count + 1
-
-                    await self.channel.default_exchange.publish(
-                        Message(
-                            body=message.body,
-                            headers=headers,
-                            delivery_mode=DeliveryMode.PERSISTENT,
-                        ),
-                        routing_key=self.retry_name,
-                    )
-                    await message.ack()
-                    logging.info(
-                        f"Message sent to retry queue (retry {retry_count + 1})"
-                    )
-
+                if retry_count >= self.max_retries:
+                    logging.warning("Max retries reached, sending to DLQ")
+                    await message.reject(requeue=False)
                 else:
-                    # Send to DLQ
-                    await self.channel.default_exchange.publish(
+                    logging.warning(f"Retrying message (attempt {retry_count}) after delay")
+                    await self.retry_exchange.publish(
                         Message(
                             body=message.body,
-                            headers=message.headers,
                             delivery_mode=DeliveryMode.PERSISTENT,
+                            headers={
+                                **message.headers,
+                                "x-retry-count": retry_count,
+                                "x-delay": self.retry_delay_ms,
+                            },
                         ),
-                        routing_key=self.dlq_name,
+                        routing_key=self.queue_name,
                     )
                     await message.ack()
-                    logging.warning(
-                        "Message sent to dead-letter queue after max retries."
-                    )
 
         if not self.queue:
             await self.connect()
